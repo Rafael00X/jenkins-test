@@ -38,11 +38,11 @@ pipeline {
                     docker save ${DOCKER_IMAGE}:${env.BUILD_NUMBER} | gzip > nextjs-app.tar.gz
                     scp -o StrictHostKeyChecking=no nextjs-app.tar.gz azureuser@20.198.21.95:/home/user/
                     ssh -o StrictHostKeyChecking=no azureuser@20.198.21.95 << EOF
-                    docker load -i /home/user/nextjs-app.tar.gz
+                    docker load -i /home/azureuser/nextjs-app.tar.gz
                     docker stop nextjs-container || true
                     docker rm nextjs-container || true
                     docker run -d -p 80:3000 --name nextjs-container ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
-                    rm /home/user/nextjs-app.tar.gz
+                    rm /home/azureuser/nextjs-app.tar.gz
                     EOF
                     """
                 }
