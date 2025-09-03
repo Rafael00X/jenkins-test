@@ -17,14 +17,8 @@ pipeline {
         }
 
         stage('Build Next.js') {
-            agent {
-                docker {
-                    image 'node:18'   // or node:20 if you prefer
-                    args '-v $HOME/.npm:/root/.npm' // cache npm between builds
-                }
-            }
             steps {
-                sh 'npm ci'
+                sh 'npm install'
                 sh 'npm run build'
             }
         }
