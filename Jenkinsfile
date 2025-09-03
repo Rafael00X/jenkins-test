@@ -36,8 +36,8 @@ pipeline {
                 sshagent(credentials: [SSH_CREDENTIALS_ID]) {
                     sh """
                     docker save ${DOCKER_IMAGE}:${env.BUILD_NUMBER} | gzip > nextjs-app.tar.gz
-                    scp -o StrictHostKeyChecking=no nextjs-app.tar.gz user@${AZURE_VM_IP}:/home/user/
-                    ssh -o StrictHostKeyChecking=no user@${AZURE_VM_IP} << EOF
+                    scp -o StrictHostKeyChecking=no nextjs-app.tar.gz user@$20.198.21.95:/home/user/
+                    ssh -o StrictHostKeyChecking=no user@$20.198.21.95 << EOF
                     docker load -i /home/user/nextjs-app.tar.gz
                     docker stop nextjs-container || true
                     docker rm nextjs-container || true
