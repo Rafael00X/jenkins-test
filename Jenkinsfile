@@ -1,4 +1,6 @@
 pipeline {
+    agent any
+    
     environment {
         DOCKER_IMAGE = 'nextjs-app'          // Local image name
         AZURE_VM_IP = '20.198.21.95'        // Replace with your VM's public IP
