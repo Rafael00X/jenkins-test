@@ -2,25 +2,22 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'nextjs-app'  // Local image name
-        AZURE_VM_IP = '20.198.21.95'  // Replace with your VM's public IP
-        SSH_CREDENTIALS_ID = 'azure-vm-ssh'  // Jenkins credential ID for SSH
+        DOCKER_IMAGE = 'nextjs-app'          // Local image name
+        AZURE_VM_IP = '20.198.21.95'        // Replace with your VM's public IP
+        SSH_CREDENTIALS_ID = 'azure-vm-ssh' // Jenkins credential ID for SSH
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Rafael00X/jenkins-test.git', branch: 'main', credentialsId: 'github-credentials'
+                git url: 'https://github.com/Rafael00X/jenkins-test.git',
+                    branch: 'main',
+                    credentialsId: 'github-credentials'
             }
         }
 
         stage('Build Next.js') {
-            agent {
-                docker {
-                    image 'node:20'   // official Node.js image
-                    args '-v /var/run/docker.sock:/var/run/docker.sock' // optional if Docker is needed inside
-                }
-            }
+            agent { label 'node-agent' }   // Run on your Node.js agent
             steps {
                 sh 'npm install'
                 sh 'npm run build'
