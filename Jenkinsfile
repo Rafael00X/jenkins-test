@@ -17,6 +17,12 @@ pipeline {
         }
 
         stage('Build Next.js') {
+            agent {
+                docker {
+                    image 'node:lts'       // latest Node.js LTS (includes npm)
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
                 sh 'npm install'
                 sh 'npm run build'
@@ -25,9 +31,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
-                }
+                sh "docker build -t ${DOCKER_IMAGE}:${env.BUILD_NUMBER} ."
             }
         }
 
@@ -37,11 +41,11 @@ pipeline {
                     sh """
                     docker save ${DOCKER_IMAGE}:${env.BUILD_NUMBER} | gzip > nextjs-app.tar.gz
                     scp -o StrictHostKeyChecking=no nextjs-app.tar.gz user@${AZURE_VM_IP}:/home/user/
-                    ssh -o StrictHostKeyChecking=no user@${AZURE_VM_IP} << EOF
+                    ssh -o StrictHostKeyChecking=no user@${AZURE_VM_IP} << 'EOF'
                     docker load -i /home/user/nextjs-app.tar.gz
                     docker stop nextjs-container || true
                     docker rm nextjs-container || true
-                    docker run -d -p 80:3000 --name nextjs-container ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
+                    docker run -d -p 80:3000 --name nextjs-container ${DOCKER_IMAGE}:${BUILD_NUMBER}
                     rm /home/user/nextjs-app.tar.gz
                     EOF
                     """
