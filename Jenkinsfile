@@ -15,6 +15,12 @@ pipeline {
         }
 
         stage('Build Next.js') {
+            agent {
+                docker {
+                    image 'node:20'   // official Node.js image
+                    args '-v /var/run/docker.sock:/var/run/docker.sock' // optional if Docker is needed inside
+                }
+            }
             steps {
                 sh 'npm install'
                 sh 'npm run build'
