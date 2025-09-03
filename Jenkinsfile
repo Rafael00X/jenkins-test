@@ -42,7 +42,7 @@ pipeline {
                     docker load -i /home/${AZURE_VM_USER}/nextjs-app.tar.gz && \
                     docker stop nextjs-container || true && \
                     docker rm nextjs-container || true && \
-                    docker run -d -p 80:3000 --name nextjs-container ${DOCKER_IMAGE}:${env.BUILD_NUMBER} && \
+                    docker run -d -p 3000:3000 --name nextjs-container ${DOCKER_IMAGE}:${env.BUILD_NUMBER} && \
                     rm /home/${AZURE_VM_USER}/nextjs-app.tar.gz"
                     """
                 }
