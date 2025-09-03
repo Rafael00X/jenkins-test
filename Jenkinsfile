@@ -1,63 +1,50 @@
 pipeline {
-    agent any  // Runs on the Jenkins agent (your VM)
+    agent any
 
     environment {
-        DOCKER_IMAGE = 'nextjs-app'  // Name your image
-        CONTAINER_NAME = 'nextjs-container'  // Name your container
-        PORT = '3000'  // Exposed port
+        DOCKER_IMAGE = 'nextjs-app'  // Local image name
+        AZURE_VM_IP = '20.62.0.10'  // Replace with your VM's public IP
+        SSH_CREDENTIALS_ID = 'azure-vm-ssh'  // Jenkins credential ID for SSH
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm ci'
+                git url: 'https://github.com/yourusername/your-nextjs-repo.git', branch: 'main'
             }
         }
 
         stage('Build Next.js') {
             steps {
+                sh 'npm install'
                 sh 'npm run build'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE}:latest ."
+                script {
+                    docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
+                }
             }
         }
 
-        stage('Deploy to Docker') {
+        stage('Save and Transfer Docker Image') {
             steps {
-                // Stop and remove existing container if running
-                sh """
-                if [ \$(docker ps -q -f name=${CONTAINER_NAME}) ]; then
-                    docker stop ${CONTAINER_NAME}
-                fi
-                if [ \$(docker ps -a -q -f name=${CONTAINER_NAME}) ]; then
-                    docker rm ${CONTAINER_NAME}
-                fi
-                """
-                // Run new container
-                sh "docker run -d --name ${CONTAINER_NAME} -p ${PORT}:3000 ${DOCKER_IMAGE}:latest"
+                sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                    sh """
+                    docker save ${DOCKER_IMAGE}:${env.BUILD_NUMBER} | gzip > nextjs-app.tar.gz
+                    scp -o StrictHostKeyChecking=no nextjs-app.tar.gz user@${AZURE_VM_IP}:/home/user/
+                    ssh -o StrictHostKeyChecking=no user@${AZURE_VM_IP} << EOF
+                    docker load -i /home/user/nextjs-app.tar.gz
+                    docker stop nextjs-container || true
+                    docker rm nextjs-container || true
+                    docker run -d -p 80:3000 --name nextjs-container ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
+                    rm /home/user/nextjs-app.tar.gz
+                    EOF
+                    """
+                }
             }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline completed.'
-        }
-        success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Deployment failed.'
         }
     }
 }
