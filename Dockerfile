@@ -24,7 +24,7 @@ RUN npm ci --only=production
 # Copy built assets from builder stage
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.mjs ./next.config.mjs  # Adjust if using .js
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
 # Expose port
 EXPOSE 3000
